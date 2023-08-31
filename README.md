@@ -14,7 +14,14 @@ An app for find and connect ble devices. Read services info and characteristic f
 
 ## Needs to Know
 
+<<<<<<< HEAD
 This app working only **Android**
 Works Android 21 or high SDK
 Uses Kotlin version '1.7.10'
 Compilable Dart '3.0.5' or higher version
+=======
+1. This app working only **Android**
+2. Works Android 21 or high SDK
+3. Uses Kotlin version '1.7.10'
+4. Compilable Dart '3.0.5' or higher version
+>>>>>>> 96357ce5e3d1d5c880ac827107f5be7e2da2aefe
