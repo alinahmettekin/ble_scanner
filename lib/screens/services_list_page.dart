@@ -158,10 +158,10 @@ class _ServiceListPageState extends State<ServiceListPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SelectedServicesPage(
-                    selectedServices:
-                        selectedServicesProvider.selectedServices),
-              ),
+                  builder: (context) => SelectedServicesPage(
+                        selectedServices:
+                            selectedServicesProvider.selectedServices,
+                      )),
             );
           }
         },

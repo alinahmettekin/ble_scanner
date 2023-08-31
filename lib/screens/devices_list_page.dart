@@ -150,6 +150,7 @@ class _DeviceScanPageState extends State<DeviceScanPage> {
               ),
             );
           }
+          print(_devices);
         },
       ),
     );

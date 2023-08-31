@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class SelectedServicesProvider extends ChangeNotifier {
-  List<BluetoothService> _selectedServices = [];
+  final List<BluetoothService> _selectedServices = [];
 
   List<BluetoothService> get selectedServices => _selectedServices;
 
@@ -26,4 +26,14 @@ class SelectedServicesProvider extends ChangeNotifier {
     }
     return true;
   }
+}
+
+class SelectedServiceModel {
+  final BluetoothService service;
+  final String deviceId;
+
+  SelectedServiceModel({
+    required this.service,
+    required this.deviceId,
+  });
 }

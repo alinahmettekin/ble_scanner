@@ -1,4 +1,4 @@
-import 'package:ble_scanner/screens/devices_list_page.dart';
+import 'package:ble_scanner/models/selected_service_model_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -12,181 +12,145 @@ class SelectedServicesPage extends StatefulWidget {
 }
 
 class _SelectedServicesPageState extends State<SelectedServicesPage> {
-  List<String> _availableMetrics = ['Count', 'Uptime', 'Freq', 'Temp'];
-  Map<String, Map<String, BluetoothCharacteristic?>> _selectedCharacteristics =
-      {};
-  Map<String, Map<String, String>> _characteristicValues = {};
+  List<Map<String, String>> _characteristicValuesList = [];
+  List<SelectedServiceModel> _selectedServiceModels = [];
+
+  final Map<String, String> _characteristicUuidsService1 = {
+    'Count': 'deadbeef-0003-454d-bccc-4ad7a331d1bf',
+    'Uptime': 'deadbeef-0004-4f34-bcc8-de1fcfdb5a9c',
+    'Freq': 'deadbeef-0005-47fa-9c4f-42d19dc6eea6',
+    'Temp': 'deadbeef-0006-456d-823d-2c857fa17003',
+  };
+
+  final Map<String, String> _characteristicUuidsService2 = {
+    'Count': 'deadbeef-1003-454d-bccc-4ad7a331d1bf',
+    'Uptime': 'deadbeef-1004-4f34-bcc8-de1fcfdb5a9c',
+    'Freq': 'deadbeef-1005-47fa-9c4f-42d19dc6eea6',
+    'Temp': 'deadbeef-1006-456d-823d-2c857fa17003',
+  };
+
+  final Map<String, String> _deviceNames = {
+    'deadbeef-0001-4200-a1cb-d7399a4f2759': 'Server Health Service 2',
+    'deadbeef-1001-4200-a1cb-d7399a4f2759': 'Server Health Service 3',
+    // adding service uuid and name
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToCharacteristics();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50),
-        child: AppBar(
-          backgroundColor: Colors.blueAccent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(20),
-            ),
+      appBar: AppBar(
+        title: Text("Selected Services"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.list),
+            onPressed: () {
+              setState(() {
+                widget.selectedServices.clear();
+              });
+            },
           ),
-          title: Text(
-            "Selected Services",
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.list),
-              onPressed: () {
-                _showRemoveDevicesDialog();
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _characteristicValuesList.length,
+              itemBuilder: (context, index) {
+                final serviceData = _characteristicValuesList[index];
+                final deviceId = serviceData['deviceId'] ?? 'Unknown Device';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      title: Text("Device ID: $deviceId"),
+                    ),
+                    ...serviceData.entries
+                        .where((entry) => entry.key != 'deviceId')
+                        .map((entry) => ListTile(
+                              title: Text("${entry.key}: ${entry.value}"),
+                            ))
+                        .toList(),
+                  ],
+                );
               },
             ),
-          ],
-        ),
-      ),
-      body: ListView.builder(
-        itemCount: widget.selectedServices.length,
-        itemBuilder: (context, index) {
-          final service = widget.selectedServices[index];
-          final remoteId = service.remoteId.toString();
-
-          if (!_selectedCharacteristics.containsKey(remoteId)) {
-            _initializeDeviceData(remoteId);
-          }
-
-          return ExpansionTile(
-            title: Text(
-              'Device ID: $remoteId',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              service.uuid.toString(),
-              style: TextStyle(fontSize: 12),
-            ),
-            children: _buildCharacteristicsList(service, remoteId),
-          );
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.blue[100],
-        selectedFontSize: 13,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.scanner),
-            label: 'Cihazlar',
-            backgroundColor: Colors.black,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Seçili Servisler',
-          )
         ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DeviceScanPage(),
-              ),
-            );
-          }
-        },
       ),
     );
   }
 
-  void _initializeDeviceData(String remoteId) {
-    _selectedCharacteristics[remoteId] = {};
-    _characteristicValues[remoteId] = {};
-    for (var metric in _availableMetrics) {
-      _selectedCharacteristics[remoteId]![metric] = null;
-      _characteristicValues[remoteId]![metric] = '';
+  String? _getServiceName(String deviceId) {
+    return _deviceNames[deviceId];
+  }
+
+  String? _getDeviceName(String deviceId) {
+    final selectedServiceModel = _selectedServiceModels.firstWhere(
+      (model) => model.deviceId == deviceId,
+      orElse: () => SelectedServiceModel(
+        service: widget.selectedServices[0], // Varsayılan bir servis
+        deviceId: deviceId,
+      ),
+    );
+
+    return _deviceNames[selectedServiceModel.deviceId] ??
+        'Device ${widget.selectedServices.indexOf(selectedServiceModel.service) + 1}';
+  }
+
+  void _subscribeToCharacteristics() {
+    for (var service in widget.selectedServices) {
+      if (service.uuid.toString() == 'deadbeef-0001-4200-a1cb-d7399a4f2759') {
+        _subscribeToServiceCharacteristics(_characteristicUuidsService1,
+            service.characteristics, service.remoteId.toString());
+      } else if (service.uuid.toString() ==
+          'deadbeef-1001-4200-a1cb-d7399a4f2759') {
+        _subscribeToServiceCharacteristics(_characteristicUuidsService2,
+            service.characteristics, service.remoteId.toString());
+      }
+
+      _selectedServiceModels.add(
+        SelectedServiceModel(
+          service: service,
+          deviceId: service.remoteId.toString(),
+        ),
+      );
     }
   }
 
-  List<Widget> _buildCharacteristicsList(
-      BluetoothService service, String remoteId) {
-    return _availableMetrics.map(
-      (metric) {
-        BluetoothCharacteristic? selectedCharacteristic =
-            _selectedCharacteristics[remoteId]![metric];
-        String characteristicValue =
-            _characteristicValues[remoteId]![metric] ?? '';
+  void _showCharacteristicValuesDialog(int index) {
+    final serviceData = _characteristicValuesList[index];
+    final deviceId = serviceData['deviceId'];
+    final deviceName = _getDeviceName(deviceId!) ?? 'Unknown';
 
-        return ListTile(
-          title: Text(
-            "$metric: $characteristicValue",
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-          ),
-          trailing: Container(
-            child: DropdownButton<BluetoothCharacteristic?>(
-              value: selectedCharacteristic,
-              onChanged: (newValue) {
-                setState(
-                  () {
-                    _selectedCharacteristics[remoteId]![metric] = newValue;
-                    _characteristicValues[remoteId]![metric] =
-                        ''; // Reset the value when selecting a new characteristic
-                  },
-                );
-              },
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 10,
-              ),
-              items: service.characteristics.map(
-                (characteristic) {
-                  return DropdownMenuItem<BluetoothCharacteristic?>(
-                    value: characteristic,
-                    child: Text(characteristic.uuid.toString()),
-                  );
-                },
-              ).toList(),
-            ),
-          ),
-          onTap: () {
-            if (selectedCharacteristic != null) {
-              selectedCharacteristic.value.listen(
-                (value) {
-                  setState(
-                    () {
-                      _characteristicValues[remoteId]![metric] =
-                          _convertToHex(value);
-                    },
-                  );
-                },
-              );
-            }
-          },
-        );
-      },
-    ).toList();
-  }
-
-  String _convertToHex(List<int> value) {
-    return '0x' +
-        value.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
-  }
-
-  void _showRemoveDevicesDialog() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Remove Devices"),
-          content: Text("Are you sure you want to remove selected devices?"),
-          actions: [
+          title: Text("Device: $deviceName"),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: serviceData.entries
+                .where((entry) => entry.key != 'deviceId')
+                .map((entry) => ListTile(
+                      title: Text("${entry.key}: ${entry.value}"),
+                    ))
+                .toList(),
+          ),
+          actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context).pop();
               },
-              child: Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                _removeSelectedDevices();
-                Navigator.pop(context);
-              },
-              child: Text("Yes"),
+              child: Text('Close'),
             ),
           ],
         );
@@ -194,11 +158,25 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
     );
   }
 
-  void _removeSelectedDevices() {
-    setState(() {
-      widget.selectedServices.clear();
-      _selectedCharacteristics.clear();
-      _characteristicValues.clear();
-    });
+  void _subscribeToServiceCharacteristics(
+      Map<String, String> characteristicUuids,
+      List<BluetoothCharacteristic> serviceCharacteristics,
+      String deviceId) {
+    final characteristicValues = <String, String>{'deviceId': deviceId};
+    for (var metric in characteristicUuids.keys) {
+      final characteristicUuid = characteristicUuids[metric];
+      final characteristic = serviceCharacteristics
+          .firstWhere((c) => c.uuid.toString() == characteristicUuid);
+
+      if (characteristic != null) {
+        characteristic.value.listen((data) {
+          setState(() {
+            characteristicValues[metric] = data.toString();
+          });
+        });
+      }
+    }
+
+    _characteristicValuesList.add(characteristicValues);
   }
 }
