@@ -1,6 +1,9 @@
+import 'package:ble_scanner/configuraitons/configuration_file.dart';
 import 'package:ble_scanner/models/selected_service_model_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
+
 
 class SelectedServicesPage extends StatefulWidget {
   final List<BluetoothService> selectedServices;
@@ -14,26 +17,6 @@ class SelectedServicesPage extends StatefulWidget {
 class _SelectedServicesPageState extends State<SelectedServicesPage> {
   List<Map<String, String>> _characteristicValuesList = [];
   List<SelectedServiceModel> _selectedServiceModels = [];
-
-  final Map<String, String> _characteristicUuidsService1 = {
-    'Count': 'deadbeef-0003-454d-bccc-4ad7a331d1bf',
-    'Uptime': 'deadbeef-0004-4f34-bcc8-de1fcfdb5a9c',
-    'Freq': 'deadbeef-0005-47fa-9c4f-42d19dc6eea6',
-    'Temp': 'deadbeef-0006-456d-823d-2c857fa17003',
-  };
-
-  final Map<String, String> _characteristicUuidsService2 = {
-    'Count': 'deadbeef-1003-454d-bccc-4ad7a331d1bf',
-    'Uptime': 'deadbeef-1004-4f34-bcc8-de1fcfdb5a9c',
-    'Freq': 'deadbeef-1005-47fa-9c4f-42d19dc6eea6',
-    'Temp': 'deadbeef-1006-456d-823d-2c857fa17003',
-  };
-
-  final Map<String, String> _deviceNames = {
-    'deadbeef-0001-4200-a1cb-d7399a4f2759': 'Server Health Service 2',
-    'deadbeef-1001-4200-a1cb-d7399a4f2759': 'Server Health Service 3',
-    // adding service uuid and name
-  };
 
   @override
   void initState() {
@@ -88,10 +71,6 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
     );
   }
 
-  String? _getServiceName(String deviceId) {
-    return _deviceNames[deviceId];
-  }
-
   String? _getDeviceName(String deviceId) {
     final selectedServiceModel = _selectedServiceModels.firstWhere(
       (model) => model.deviceId == deviceId,
@@ -101,19 +80,21 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
       ),
     );
 
-    return _deviceNames[selectedServiceModel.deviceId] ??
+    return ServiceDefinitions.deviceNames[selectedServiceModel.deviceId] ??
         'Device ${widget.selectedServices.indexOf(selectedServiceModel.service) + 1}';
   }
 
   void _subscribeToCharacteristics() {
     for (var service in widget.selectedServices) {
-      if (service.uuid.toString() == 'deadbeef-0001-4200-a1cb-d7399a4f2759') {
-        _subscribeToServiceCharacteristics(_characteristicUuidsService1,
-            service.characteristics, service.remoteId.toString());
-      } else if (service.uuid.toString() ==
-          'deadbeef-1001-4200-a1cb-d7399a4f2759') {
-        _subscribeToServiceCharacteristics(_characteristicUuidsService2,
-            service.characteristics, service.remoteId.toString());
+      final serviceUuid = service.uuid.toString();
+      final characteristicUuids = ServiceDefinitions.characteristicUuids[serviceUuid];
+
+      if (characteristicUuids != null) {
+        _subscribeToServiceCharacteristics(
+          characteristicUuids,
+          service.characteristics,
+          service.remoteId.toString(),
+        );
       }
 
       _selectedServiceModels.add(
