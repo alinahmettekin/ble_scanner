@@ -3,8 +3,6 @@ import 'package:ble_scanner/models/selected_service_model_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
-
-
 class SelectedServicesPage extends StatefulWidget {
   final List<BluetoothService> selectedServices;
 
@@ -27,21 +25,38 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Selected Services"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.list),
-            onPressed: () {
-              setState(() {
-                widget.selectedServices.clear();
-              });
-            },
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(50),
+        child: AppBar(
+          backgroundColor: Colors.blueAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
           ),
-        ],
+          title: Text(
+            "Selected Services Page",
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.list),
+              onPressed: () {
+                _showClearListDialog();
+              },
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              "Selected Services: ${widget.selectedServices.length}",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: _characteristicValuesList.length,
@@ -49,19 +64,28 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
                 final serviceData = _characteristicValuesList[index];
                 final deviceId = serviceData['deviceId'] ?? 'Unknown Device';
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      title: Text("Device ID: $deviceId"),
-                    ),
-                    ...serviceData.entries
-                        .where((entry) => entry.key != 'deviceId')
-                        .map((entry) => ListTile(
-                              title: Text("${entry.key}: ${entry.value}"),
-                            ))
-                        .toList(),
-                  ],
+                return Card(
+                  margin: EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListTile(
+                        title: Text(
+                          "Device ID: $deviceId",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      ...serviceData.entries
+                          .where((entry) => entry.key != 'deviceId')
+                          .map((entry) => ListTile(
+                                title: Text("${entry.key}: ${entry.value}"),
+                              ))
+                          .toList(),
+                    ],
+                  ),
                 );
               },
             ),
@@ -75,7 +99,7 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
     final selectedServiceModel = _selectedServiceModels.firstWhere(
       (model) => model.deviceId == deviceId,
       orElse: () => SelectedServiceModel(
-        service: widget.selectedServices[0], // Varsayılan bir servis
+        service: widget.selectedServices[0],
         deviceId: deviceId,
       ),
     );
@@ -87,7 +111,8 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
   void _subscribeToCharacteristics() {
     for (var service in widget.selectedServices) {
       final serviceUuid = service.uuid.toString();
-      final characteristicUuids = ServiceDefinitions.characteristicUuids[serviceUuid];
+      final characteristicUuids =
+          ServiceDefinitions.characteristicUuids[serviceUuid];
 
       if (characteristicUuids != null) {
         _subscribeToServiceCharacteristics(
@@ -106,32 +131,30 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
     }
   }
 
-  void _showCharacteristicValuesDialog(int index) {
-    final serviceData = _characteristicValuesList[index];
-    final deviceId = serviceData['deviceId'];
-    final deviceName = _getDeviceName(deviceId!) ?? 'Unknown';
-
+  void _showClearListDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Device: $deviceName"),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: serviceData.entries
-                .where((entry) => entry.key != 'deviceId')
-                .map((entry) => ListTile(
-                      title: Text("${entry.key}: ${entry.value}"),
-                    ))
-                .toList(),
-          ),
+          title: Text("Clear List"),
+          content: Text("Do you want to clear the selected services list?"),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Diyalog kutusunu kapat
+
+                setState(() {
+                  // Listeyi temizle
+                  widget.selectedServices.clear();
+                });
               },
-              child: Text('Close'),
+              child: Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Diyalog kutusunu kapat
+              },
+              child: Text('No'),
             ),
           ],
         );

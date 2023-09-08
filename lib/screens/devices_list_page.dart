@@ -1,4 +1,5 @@
 import 'package:ble_scanner/models/selected_service_model_page.dart';
+import 'package:ble_scanner/screens/about_page.dart';
 import 'package:ble_scanner/screens/selected_services_page.dart';
 import 'package:ble_scanner/screens/services_list_page.dart';
 import 'package:flutter/material.dart';
@@ -87,6 +88,17 @@ class _DeviceScanPageState extends State<DeviceScanPage> {
               ),
             ),
             SizedBox(width: 16),
+            IconButton(
+              icon: Icon(Icons.info, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AboutPage(), // Hakkında sayfasına git
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
