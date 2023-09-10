@@ -14,12 +14,13 @@ class DeviceScanPage extends StatefulWidget {
 class _DeviceScanPageState extends State<DeviceScanPage> {
   List<BluetoothDevice> _devices = [];
   bool _isScanning = false;
-
+  Map<BluetoothDevice, bool> _connectionStatus = {}; // Bağlantı durumu
   int _currentIndex = 0; // Seçili olan bottom navigation bar tuşunun index'i
 
   @override
   void initState() {
     super.initState();
+
     _startScanning();
   }
 
@@ -30,6 +31,8 @@ class _DeviceScanPageState extends State<DeviceScanPage> {
         _devices = results.map((r) => r.device).toList();
       });
     });
+    FlutterBluePlus.connectedDevices.asStream().listen((devices) =>
+        _updateConnectionStatus(devices)); // Bağlı cihazları takip et
     setState(() {
       _isScanning = true;
     });
@@ -54,6 +57,15 @@ class _DeviceScanPageState extends State<DeviceScanPage> {
   void dispose() {
     FlutterBluePlus.stopScan();
     super.dispose();
+  }
+
+  void _updateConnectionStatus(List<BluetoothDevice> devices) {
+    for (var device in devices) {
+      final isConnected = _connectionStatus[device] ?? false; // Bağlantı durumu
+      setState(() {
+        _connectionStatus[device] = isConnected; // Bağlantı durumu güncelle
+      });
+    }
   }
 
   @override
@@ -112,24 +124,36 @@ class _DeviceScanPageState extends State<DeviceScanPage> {
               itemCount: _devices.length,
               itemBuilder: (context, index) {
                 final device = _devices[index];
+                final isConnected =
+                    _connectionStatus[device] ?? false; // Bağlantı durumu
                 return ListTile(
                   title: Text(
                     device.localName ?? 'Unknown Device',
-                    style: TextStyle(color: Colors.blue),
+                    style: TextStyle(
+                      color: isConnected ? Colors.green : Colors.blue,
+                    ),
                   ),
                   subtitle: Text(
                     device.remoteId.toString(),
                     style: TextStyle(color: Colors.grey),
                   ),
+                  trailing: isConnected
+                      ? Text("Connected", style: TextStyle(color: Colors.green))
+                      : Text("Connect", style: TextStyle(color: Colors.blue)),
                   onTap: () async {
-                    await device.connect();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceListPage(device: device),
-                      ),
-                    );
-                    _stopScanning();
+                    if (isConnected) {
+                      // Cihaz zaten bağlıysa
+                      // İşlemleri burada yönetin
+                    } else {
+                      await device.connect();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceListPage(device: device),
+                        ),
+                      );
+                      _stopScanning();
+                    }
                   },
                 );
               },

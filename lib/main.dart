@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bluetooth Explorer',
+      title: 'UZAY BLE SCANNER',
       theme: ThemeData(
         primaryColor: Colors.blueGrey, // Ana renk gri tonu
         hintColor: Colors.blue, // Vurgu rengi mavi

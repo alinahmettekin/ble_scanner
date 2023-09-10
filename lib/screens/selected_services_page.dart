@@ -22,6 +22,18 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
     _subscribeToCharacteristics();
   }
 
+  Color determineBackgroundColor(Map<String, String> serviceData) {
+    // Burada serviceData'dan gelen verilere göre arka plan rengini belirleyin
+    // Örneğin, count 1024'ten büyükse Colors.red, diğer durumlarda Colors.transparent gibi bir renk kullanabilirsiniz.
+    final count = int.tryParse(serviceData['count'] ?? '');
+    if (count != null && count > 1024) {
+      return Colors.red;
+    } else {
+      return Colors
+          .transparent; // Diğer durumlarda arka plan rengini şeffaf yapar.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,28 +75,33 @@ class _SelectedServicesPageState extends State<SelectedServicesPage> {
               itemBuilder: (context, index) {
                 final serviceData = _characteristicValuesList[index];
                 final deviceId = serviceData['deviceId'] ?? 'Unknown Device';
+                final backgroundColor = determineBackgroundColor(serviceData);
 
-                return Card(
-                  margin: EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        title: Text(
-                          "Device ID: $deviceId",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                return Container(
+                  color:
+                      backgroundColor, // Her öğenin kendi arka plan rengini belirleyin
+                  child: Card(
+                    margin: EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          title: Text(
+                            "Device ID: $deviceId",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      ...serviceData.entries
-                          .where((entry) => entry.key != 'deviceId')
-                          .map((entry) => ListTile(
-                                title: Text("${entry.key}: ${entry.value}"),
-                              ))
-                          .toList(),
-                    ],
+                        ...serviceData.entries
+                            .where((entry) => entry.key != 'deviceId')
+                            .map((entry) => ListTile(
+                                  title: Text("${entry.key}: ${entry.value}"),
+                                ))
+                            .toList(),
+                      ],
+                    ),
                   ),
                 );
               },
