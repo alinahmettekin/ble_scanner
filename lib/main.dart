@@ -1,4 +1,4 @@
-import 'package:ble_scanner/models/selected_service_model_page.dart';
+import 'package:ble_scanner/models/service_model.dart';
 import 'package:ble_scanner/screens/devices_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -1,4 +1,4 @@
-import 'package:ble_scanner/models/selected_service_model_page.dart';
+import 'package:ble_scanner/models/service_model.dart';
 import 'package:ble_scanner/screens/selected_services_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -129,7 +129,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     Text(
-                      'Unicode: ${characteristic.lastValue != null && characteristic.lastValue.isNotEmpty && characteristic.lastValue[0] >= 0 && characteristic.lastValue[0] <= 65535 ? String.fromCharCode(characteristic.lastValue[0]) : 'No Data'}',
+                      'Unicode: ${characteristic.lastValue.isNotEmpty && characteristic.lastValue[0] >= 0 && characteristic.lastValue[0] <= 65535 ? String.fromCharCode(characteristic.lastValue[0]) : 'No Data'}',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ],
